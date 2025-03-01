@@ -1,0 +1,22 @@
+{
+  "lock": false,
+  "fmt": {
+    "indentWidth": 2,
+    "proseWrap": "preserve",
+    "exclude": [
+      "./node_modules/",
+      "./out/",
+      "./package-lock.json"
+    ]
+  },
+  "lint": {
+    "exclude": [
+      "./node_modules/",
+      "./out/",
+      "./package-lock.json"
+    ]
+  },
+  "tasks": {
+    "backport": "rm -rf out && npm install --no-package-lock && deno run --no-prompt --allow-read=. --allow-write=. https://lib.deno.dev/x/deno2node@v1/src/cli.ts"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@grammyjs/callbacks",
+  "version": "0.0.1",
+  "description": "A grammY plugin to manage callback queries",
+  "homepage": "https://github.com/rayz1065/grammy-callbacks.git",
+  "main": "./out/mod.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "deno task backport",
+    "prepublishOnly": "deno task backport"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rayz1065/grammy-callbacks.git"
+  },
+  "exports": {
+    ".": "./out/mod.js"
+  },
+  "files": [
+    "out/"
+  ],
+  "author": "Rayz1065",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rayz1065/grammy-callbacks/issues"
+  },
+  "peerDependencies": {
+    "grammy": "^1.35.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "keywords": [
+    "grammY",
+    "Telegram bot framework",
+    "plugin"
+  ]
+}
