@@ -102,3 +102,16 @@ Deno.test("Should encode arrays", () => {
     [null],
   );
 });
+
+Deno.test("Should encode enums", () => {
+  const encoder = getSchemaEncoder({
+    enum: {
+      type: "enum",
+      enum: ["hello", "world"] as const,
+      nullable: true,
+    },
+  });
+  assertEquals(encoder({ enum: "hello" }), [1]);
+  assertEquals(encoder({ enum: "world" }), [2]);
+  assertEquals(encoder({ enum: null }), [0]);
+});

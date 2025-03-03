@@ -191,6 +191,30 @@ const validators: {
       }
     };
   },
+  enum: (spec) => {
+    return (payload) => {
+      const nullableError = checkNullability(spec, payload);
+      if (nullableError) {
+        return { success: false, errors: [nullableError] };
+      } else if (payload === null) {
+        return { success: true };
+        // deno-lint-ignore no-explicit-any
+      } else if (!spec.enum.includes(payload as any)) {
+        return {
+          success: false,
+          errors: [
+            {
+              description: `Expected one of ${spec.enum.join(", ")}`,
+              found: payload,
+              path: [],
+            },
+          ],
+        };
+      }
+
+      return { success: true };
+    };
+  },
 };
 
 function getValidator(spec: CallbackSchemaItem) {

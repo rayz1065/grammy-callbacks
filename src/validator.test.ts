@@ -116,3 +116,28 @@ Deno.test("should validate arrays", () => {
     { success: true },
   );
 });
+
+Deno.test("Should validate enums", () => {
+  const validator = getSchemaValidator({
+    enum: {
+      type: "enum",
+      enum: ["hello", "world"] as const,
+    },
+  });
+  assertObjectMatch(validator({ enum: "hello" }), { success: true });
+  assertObjectMatch(validator({ enum: "world" }), { success: true });
+  assertObjectMatch(validator({ enum: null }), { success: false });
+  assertObjectMatch(validator({ enum: 1 }), { success: false });
+
+  const nullableValidator = getSchemaValidator({
+    enum: {
+      type: "enum",
+      enum: ["hello", "world"] as const,
+      nullable: true,
+    },
+  });
+  assertObjectMatch(validator({ enum: "hello" }), { success: true });
+  assertObjectMatch(validator({ enum: "world" }), { success: true });
+  assertObjectMatch(nullableValidator({ enum: null }), { success: true });
+  assertObjectMatch(validator({ enum: "test" }), { success: false });
+});

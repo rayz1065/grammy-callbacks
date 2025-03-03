@@ -86,6 +86,20 @@ const decoders: {
       );
     };
   },
+  enum: (spec) => {
+    return (payload) => {
+      if (!Number.isInteger(payload)) {
+        return poison;
+      } else if (payload === 0) {
+        return null;
+      }
+      const index = payload as number - 1;
+      if (index < 0 || index >= spec.enum.length) {
+        return poison;
+      }
+      return spec.enum[index];
+    };
+  },
 };
 
 function getDecoder(spec: CallbackSchemaItem) {

@@ -76,6 +76,13 @@ const encoders: {
       return keys.map((k) => children[k](payload[k] ?? null));
     };
   },
+  enum: (spec) => {
+    return (payload) => {
+      // NOTE: null is encoded as 0
+      // deno-lint-ignore no-explicit-any
+      return spec.enum.indexOf(payload as any) + 1;
+    };
+  },
 };
 
 function getEncoder(spec: CallbackSchemaItem) {

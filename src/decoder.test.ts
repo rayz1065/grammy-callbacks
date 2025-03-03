@@ -98,3 +98,16 @@ Deno.test("Should decode arrays", () => {
     { root: null },
   );
 });
+
+Deno.test("Should decode enums", () => {
+  const decoder = getSchemaDecoder({
+    enum: {
+      type: "enum",
+      enum: ["hello", "world"],
+      nullable: true,
+    },
+  });
+  assertEquals(decoder([1]), { enum: "hello" });
+  assertEquals(decoder([2]), { enum: "world" });
+  assertEquals(decoder([0]), { enum: null });
+});

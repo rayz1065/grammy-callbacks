@@ -26,6 +26,10 @@ Deno.test("should infer the correct return type", () => {
         },
       },
     },
+    enum: {
+      type: "enum",
+      enum: ["hello", "world", 1, 2, 3] as const,
+    },
   } satisfies CallbackSchema;
 
   type Test = AssertTrue<
@@ -48,6 +52,7 @@ Deno.test("should infer the correct return type", () => {
             bar: number;
           }
         >;
+        enum: "hello" | "world" | 1 | 2 | 3;
       }
     >
   >;
