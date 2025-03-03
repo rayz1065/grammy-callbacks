@@ -2,6 +2,7 @@ import { assertEquals } from "jsr:@std/assert/equals";
 import { createCallbacksBag } from "./callbacks-bag.ts";
 import { Api, Composer, Context, Update, UserFromGetMe } from "./deps.deno.ts";
 import { spy } from "jsr:@std/testing/mock";
+import { assertObjectMatch } from "jsr:@std/assert/object-match";
 
 function getCallbacksBag() {
   const composer = new Composer();
@@ -51,10 +52,8 @@ Deno.test("Should filter correctly", async () => {
     commonPrefix: "foo",
     onValidationError: onValidationErrorSpy,
   });
-  const cb = bag.register("bar", { value: "bigint" });
-
   const spiedMiddleware = spy(() => {});
-  cb.composer.use(spiedMiddleware);
+  const _cb = bag.register("bar", { value: "bigint" }, spiedMiddleware);
 
   const ctxMatched = makeCallbackContext('foo.bar."1"');
 
@@ -73,4 +72,33 @@ Deno.test("Should filter correctly", async () => {
   await composer.middleware()(ctxInvalid, async () => {});
   assertEquals(spiedMiddleware.calls.length, 1);
   assertEquals(onValidationErrorSpy.calls.length, 1);
+});
+
+Deno.test("Should allow migrating callbacks", async () => {
+  const composer = new Composer();
+  const bag = createCallbacksBag(composer, {
+    commonPrefix: "foo",
+  });
+
+  const spiedMiddleware = spy((_ctx: Context) => {});
+  const cb = bag.register("barV2", { value: "bigint" }, spiedMiddleware);
+
+  bag.migrate({
+    old: { prefix: "bar", schema: { value: "number" } },
+    new: cb,
+    adapter: (ctx) => {
+      const { value } = ctx.matchedCallback;
+      return { value: BigInt(value) };
+    },
+  });
+
+  const ctx = makeCallbackContext("foo.bar.123");
+  assertEquals(spiedMiddleware.calls.length, 0);
+  await composer.middleware()(ctx, async () => {});
+  assertEquals(spiedMiddleware.calls.length, 1);
+  assertObjectMatch(spiedMiddleware.calls[0].args[0], {
+    matchedCallback: {
+      value: 123n,
+    },
+  });
 });
