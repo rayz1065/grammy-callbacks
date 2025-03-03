@@ -6,10 +6,11 @@ import { assertObjectMatch } from "jsr:@std/assert/object-match";
 
 function getCallbacksBag() {
   const composer = new Composer();
-  const bag = createCallbacksBag(composer, {
+  const bag = createCallbacksBag({
     commonPrefix: "foo",
   });
-  const cb = bag.register("bar", { value: "bigint" });
+  composer.use(bag);
+  const cb = bag.register({ prefix: "bar", schema: { value: "bigint" } });
   return { composer, bag, cb };
 }
 
@@ -30,9 +31,8 @@ Deno.test("Should pack a callback with the common prefix", () => {
 });
 
 Deno.test("Should pack a callback without the common prefix", () => {
-  const composer = new Composer();
-  const bag = createCallbacksBag(composer);
-  const cb = bag.register("bar", { value: "bigint" });
+  const bag = createCallbacksBag();
+  const cb = bag.register({ prefix: "bar", schema: { value: "bigint" } });
 
   assertEquals(cb.pack({ value: 1n }), 'bar."1"');
   assertEquals(cb.pack({ value: 1065n }), 'bar."429"');
@@ -48,12 +48,16 @@ Deno.test("Should filter correctly", async () => {
   const onValidationErrorSpy = spy(() => {});
 
   const composer = new Composer();
-  const bag = createCallbacksBag(composer, {
+  const bag = createCallbacksBag({
     commonPrefix: "foo",
     onValidationError: onValidationErrorSpy,
   });
+  composer.use(bag);
   const spiedMiddleware = spy(() => {});
-  const _cb = bag.register("bar", { value: "bigint" }, spiedMiddleware);
+  const _cb = bag.register(
+    { prefix: "bar", schema: { value: "bigint" } },
+    spiedMiddleware,
+  );
 
   const ctxMatched = makeCallbackContext('foo.bar."1"');
 
@@ -76,12 +80,16 @@ Deno.test("Should filter correctly", async () => {
 
 Deno.test("Should allow migrating callbacks", async () => {
   const composer = new Composer();
-  const bag = createCallbacksBag(composer, {
+  const bag = createCallbacksBag({
     commonPrefix: "foo",
   });
+  composer.use(bag);
 
   const spiedMiddleware = spy((_ctx: Context) => {});
-  const cb = bag.register("barV2", { value: "bigint" }, spiedMiddleware);
+  const cb = bag.register(
+    { prefix: "barV2", schema: { value: "bigint" } },
+    spiedMiddleware,
+  );
 
   bag.migrate({
     old: { prefix: "bar", schema: { value: "number" } },

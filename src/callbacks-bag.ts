@@ -3,6 +3,7 @@ import {
   Context,
   Filter,
   Middleware,
+  MiddlewareObj,
   NextFunction,
 } from "./deps.deno.ts";
 import { CallbackDataCodec, createCallbackData } from "./callback-data.ts";
@@ -33,6 +34,14 @@ type CallbacksBagCodec<C extends Context, T extends CallbackSchema> =
   & Omit<CallbackDataCodec<T>, "filter">
   & { composer: Composer<CallbackBagContext<C, T>> };
 
+export type CallbacksBagOptions<C extends Context> = {
+  commonPrefix?: string;
+  onValidationError?: (
+    ctx: Filter<C, "callback_query:data">,
+    next: NextFunction,
+  ) => MaybePromise<unknown>;
+};
+
 /**
  * A container for multiple callbacks. The `register` function allows adding
  * more callback queries to the listened ones.
@@ -42,14 +51,16 @@ export type CallbacksBag<C extends Context> = {
    * Register a new callback query in this bag.
    *
    * ```ts
-   * const callbackData = bag.register('foo', { value: 'number' }, (ctx) => {
+   * const callbackData = bag.register({
+   *   prefix: "foo",
+   *   schema: { value: "number" },
+   * }, (ctx) => {
    *   const { value } = callbackData.unpack(ctx);
-   * })
+   * });
    * ```
    */
   register: <T extends CallbackSchema>(
-    prefix: string,
-    schema: T,
+    callbackData: { prefix: string; schema: T },
     ...middleware: Middleware<CallbackBagContext<C, T>>[]
   ) => CallbacksBagCodec<C, T>;
   /**
@@ -68,11 +79,10 @@ export type CallbacksBag<C extends Context> = {
    *
    * Example:
    * ```ts
-   * const counterCb = callbacks.register(
-   *   "count2",
-   *   { value: "number", increment: "number" },
-   *   async (ctx) => {},
-   * );
+   * const counterCb = callbacks.register({
+   *   prefix: "count2",
+   *   schema: { value: "number", increment: "number" },
+   * }, async (ctx) => {});
    *
    * callbacks.migrate({
    *   old: { prefix: "count", schema: { value: "number" } },
@@ -93,7 +103,7 @@ export type CallbacksBag<C extends Context> = {
       >;
     },
   ) => void;
-};
+} & MiddlewareObj<C>;
 
 /**
  * Create a bag of callbacks that can share a common prefix.
@@ -111,30 +121,22 @@ export type CallbacksBag<C extends Context> = {
  *
  * // register a simple counter in the bag, returns a callback codec
  * const fooCountCb = fooCallbacks.register(
- *   'count',
- *   { value: 'number' },
+ *   { prefix: "count", schema: { value: "number" } },
  *   async (ctx) => {
  *     const { value } = ctx.matchedCallback;
  *     await ctx.editMessageText(`Value: ${value}`, {
  *       reply_markup: new InlineKeyboard().text(
- *         '+1',
+ *         "+1",
  *         // use the callback codec to create a callback to the handler
- *         fooCountCb.pack({ value: value + 1 })
+ *         fooCountCb.pack({ value: value + 1 }),
  *       ),
  *     });
- *   }
+ *   },
  * );
  * ```
  */
 export function createCallbacksBag<C extends Context & CallbacksBagFlavor>(
-  parent: Composer<C>,
-  options?: {
-    commonPrefix?: string;
-    onValidationError?: (
-      ctx: Filter<C, "callback_query:data">,
-      next: NextFunction,
-    ) => MaybePromise<unknown>;
-  },
+  options?: CallbacksBagOptions<C>,
 ): CallbacksBag<C> {
   const sep = ".";
   const escapedSep = "\\.";
@@ -154,6 +156,7 @@ export function createCallbacksBag<C extends Context & CallbacksBagFlavor>(
     : "";
 
   const usedPrefixes = new Set();
+  const parent = new Composer<C>();
   const composer = parent.callbackQuery(
     new RegExp(
       `^${escapeRegExp(commonPrefixSep)}[^${escapedSep}]+${escapedSep}.*$`,
@@ -161,6 +164,9 @@ export function createCallbacksBag<C extends Context & CallbacksBagFlavor>(
   );
 
   return {
+    middleware: () => {
+      return parent.middleware();
+    },
     migrate: (migrationInfo) => {
       const { old: { prefix, schema }, new: newCb, adapter } = migrationInfo;
       if (usedPrefixes.has(prefix)) {
@@ -194,7 +200,7 @@ export function createCallbacksBag<C extends Context & CallbacksBagFlavor>(
           return [];
         });
     },
-    register: (prefix, schema, ...middleware) => {
+    register: ({ prefix, schema }, ...middleware) => {
       if (usedPrefixes.has(prefix)) {
         throw new Error(`Prefix ${prefix} already in use`);
       }
