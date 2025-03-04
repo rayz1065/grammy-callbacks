@@ -30,13 +30,13 @@ type EnumValue = PrimitiveMap[keyof PrimitiveMap];
  * inspired by JSON schema, represents an enum
  */
 export type CallbackSchemaEnum<
-  T extends ReadonlyArray<EnumValue>,
+  T extends EnumValue,
 > = {
   type: "enum";
   nullable?: boolean;
   properties?: never;
   items?: never;
-  enum: T;
+  enum: ReadonlyArray<T>;
 };
 /**
  * inspired by JSON schema, represents an object
@@ -55,7 +55,7 @@ export type CallbackSchemaItemCore =
   | CallbackSchemaPrimitive
   | CallbackSchemaObject
   | CallbackSchemaArray
-  | CallbackSchemaEnum<ReadonlyArray<EnumValue>>;
+  | CallbackSchemaEnum<EnumValue>;
 /**
  * Callback schema item, can be an object describing the type or a string
  * corresponding to one of the primitive types.
@@ -83,10 +83,6 @@ type InferMaybeNullable<T extends CallbackSchemaItem, S> = T extends {
 type InferItemCore<T extends CallbackSchemaItemCore> = InferMaybeNullable<
   T,
   (PrimitiveMap & {
-    number: number;
-    string: string;
-    boolean: boolean;
-    bigint: bigint;
     object: T extends { type: "object" }
       ? { [K in keyof T["properties"]]: InferItem<T["properties"][K]> }
       : never;
