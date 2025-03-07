@@ -80,11 +80,11 @@ const decoders: {
     return (payload) => {
       if (payload === null) {
         return null;
-      } else if (!Array.isArray(payload) || payload.length !== keys.length) {
+      } else if (!Array.isArray(payload)) {
         return poison;
       }
       return Object.fromEntries(
-        keys.map((k, i) => [k, children[k](payload[i])]),
+        keys.map((k, i) => [k, children[k](payload.at(i) ?? null)]),
       );
     };
   },

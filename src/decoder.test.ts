@@ -66,6 +66,16 @@ Deno.test("Should decode objects", () => {
     },
   );
   assertEquals(
+    decoder([[]]),
+    {
+      root: {
+        childA: null,
+        childB: null,
+        childC: null,
+      },
+    },
+  );
+  assertEquals(
     decoder([null]),
     { root: null },
   );
