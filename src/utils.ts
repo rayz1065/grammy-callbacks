@@ -25,3 +25,10 @@ export function normalizeCallbackData(data: MaybeNestedCallbackData): string {
   }
   return data.data;
 }
+
+export function ensureNoNumeric(values: string[]) {
+  const found = values.find((value) => /\d+/.test(value));
+  if (found !== undefined) {
+    throw new Error(`Numeric value ${found} is not allowed`);
+  }
+}

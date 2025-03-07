@@ -117,6 +117,72 @@ Deno.test("should validate arrays", () => {
   );
 });
 
+Deno.test("Should validate unions", () => {
+  const validator = getSchemaValidator({
+    root: {
+      type: "union",
+      options: {
+        c: {
+          type: "object",
+          properties: {
+            d: "bigint",
+            e: "number",
+          },
+        },
+        b: "number",
+        a: "string",
+      },
+    },
+  });
+  assertObjectMatch(
+    validator({
+      root: {
+        type: "a",
+        data: "test",
+      },
+    }),
+    { success: true },
+  );
+  assertObjectMatch(
+    validator({
+      root: {
+        type: "c",
+        data: {
+          d: 123n,
+          e: 456,
+        },
+      },
+    }),
+    { success: true },
+  );
+  assertObjectMatch(
+    validator({
+      root: {
+        type: "c",
+        data: "test",
+      },
+    }),
+    { success: false },
+  );
+  assertObjectMatch(
+    validator({
+      root: null,
+    }),
+    { success: false },
+  );
+
+  const nullableValidator = getSchemaValidator({
+    root: {
+      type: "union",
+      nullable: true,
+      options: {
+        a: "string",
+      },
+    },
+  });
+  assertObjectMatch(nullableValidator({ root: null }), { success: true });
+});
+
 Deno.test("Should validate enums", () => {
   const validator = getSchemaValidator({
     enum: {

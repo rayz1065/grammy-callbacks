@@ -5,6 +5,7 @@ import {
   InferCallbackSchema,
   normalizeSchemaItem,
 } from "./schema.ts";
+import { ensureNoNumeric } from "./utils.ts";
 
 type CallbackPayloadPrimitive = number | string | boolean | null | bigint;
 type CallbackPayload<T = CallbackPayloadPrimitive> =
@@ -74,6 +75,24 @@ const encoders: {
         throw new Error("Expected an object");
       }
       return keys.map((k) => children[k](payload[k] ?? null));
+    };
+  },
+  union: (spec) => {
+    const keys = Object.keys(spec.options);
+    ensureNoNumeric(keys);
+    const children = Object.fromEntries(
+      keys.map((k) => [k, getEncoder(spec.options[k])]),
+    );
+    return (payload) => {
+      if (payload === null) {
+        return null;
+      } else if (typeof payload !== "object" || Array.isArray(payload)) {
+        throw new Error("Expected an object");
+      }
+
+      const optionType = payload.type as string;
+      const optionIndex = keys.indexOf(optionType);
+      return [optionIndex, children[optionType](payload.data)];
     };
   },
   enum: (spec) => {

@@ -6,6 +6,7 @@ import {
   InferCallbackSchema,
   normalizeSchemaItem,
 } from "./schema.ts";
+import { ensureNoNumeric } from "./utils.ts";
 
 export interface SchemaValidationError {
   path: (string | number)[];
@@ -149,10 +150,7 @@ const validators: {
         return { success: false, errors: [nullableError] };
       } else if (payload === null) {
         return { success: true };
-      } else if (
-        Array.isArray(payload) ||
-        (payload !== null && typeof payload !== "object")
-      ) {
+      } else if (Array.isArray(payload) || typeof payload !== "object") {
         return {
           success: false,
           errors: [
@@ -189,6 +187,53 @@ const validators: {
           errors,
         };
       }
+    };
+  },
+  union: (spec) => {
+    const keys = Object.keys(spec.options);
+    ensureNoNumeric(keys);
+    const children = Object.fromEntries(
+      keys.map((k) => [k, getValidator(spec.options[k])]),
+    );
+
+    return (payload) => {
+      const nullableError = checkNullability(spec, payload);
+      if (nullableError) {
+        return { success: false, errors: [nullableError] };
+      } else if (payload === null) {
+        return { success: true };
+      } else if (Array.isArray(payload) || typeof payload !== "object") {
+        return {
+          success: false,
+          errors: [
+            { description: "Expected object", found: payload, path: [] },
+          ],
+        };
+      } else if (!("type" in payload) || !("data" in payload)) {
+        return {
+          success: false,
+          errors: [
+            {
+              description: "Expected type and data keys",
+              found: payload,
+              path: [],
+            },
+          ],
+        };
+      } else if (keys.indexOf(payload.type as string) === -1) {
+        return {
+          success: false,
+          errors: [
+            {
+              description: "Invalid union type",
+              found: payload,
+              path: [],
+            },
+          ],
+        };
+      }
+
+      return children[payload.type as string](payload.data);
     };
   },
   enum: (spec) => {

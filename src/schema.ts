@@ -5,48 +5,30 @@ interface PrimitiveMap {
   bigint: bigint;
 }
 
-/**
- * inspired by JSON schema, represents a primitive
- */
 export type CallbackSchemaPrimitive<T extends string = keyof PrimitiveMap> = {
   type: T;
   nullable?: boolean;
-  properties?: never;
-  items?: never;
-  enum?: never;
 };
-/**
- * inspired by JSON schema, represents an array
- */
 export type CallbackSchemaArray = {
   type: "array";
   nullable?: boolean;
-  properties?: never;
   items: CallbackSchemaItem;
-  enum?: never;
 };
 type EnumValue = PrimitiveMap[keyof PrimitiveMap];
-/**
- * inspired by JSON schema, represents an enum
- */
-export type CallbackSchemaEnum<
-  T extends EnumValue,
-> = {
+export type CallbackSchemaEnum<T extends EnumValue = EnumValue> = {
   type: "enum";
   nullable?: boolean;
-  properties?: never;
-  items?: never;
   enum: ReadonlyArray<T>;
 };
-/**
- * inspired by JSON schema, represents an object
- */
 export type CallbackSchemaObject = {
   type: "object";
   nullable?: boolean;
   properties: { [K: string]: CallbackSchemaItem };
-  items?: never;
-  enum?: never;
+};
+export type CallbackSchemaUnion = {
+  type: "union";
+  nullable?: boolean;
+  options: { [K: string]: CallbackSchemaItem };
 };
 /**
  * inspired by JSON schema, represents an item of any type
@@ -55,6 +37,7 @@ export type CallbackSchemaItemCore =
   | CallbackSchemaPrimitive
   | CallbackSchemaObject
   | CallbackSchemaArray
+  | CallbackSchemaUnion
   | CallbackSchemaEnum<EnumValue>;
 /**
  * Callback schema item, can be an object describing the type or a string
@@ -88,6 +71,13 @@ type InferItemCore<T extends CallbackSchemaItemCore> = InferMaybeNullable<
       : never;
     array: T extends { type: "array" } ? Array<InferItem<T["items"]>> : never;
     enum: T extends { type: "enum" } ? T["enum"][number] : never;
+    union: T extends { type: "union" } ? {
+        [K in keyof T["options"]]: {
+          type: K;
+          data: InferItem<T["options"][K]>;
+        };
+      }[keyof T["options"]]
+      : never;
   })[T["type"]]
 >;
 /**

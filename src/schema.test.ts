@@ -30,6 +30,20 @@ Deno.test("should infer the correct return type", () => {
       type: "enum",
       enum: ["hello", "world", 1, 2, 3] as const,
     },
+    union: {
+      type: "union",
+      options: {
+        a: "string",
+        b: "number",
+        c: {
+          type: "object",
+          properties: {
+            d: "string",
+            e: "number",
+          },
+        },
+      },
+    },
   } satisfies CallbackSchema;
 
   type Test = AssertTrue<
@@ -53,6 +67,10 @@ Deno.test("should infer the correct return type", () => {
           }
         >;
         enum: "hello" | "world" | 1 | 2 | 3;
+        union:
+          | { type: "a"; data: string }
+          | { type: "b"; data: number }
+          | { type: "c"; data: { d: string; e: number } };
       }
     >
   >;

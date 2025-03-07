@@ -4,6 +4,7 @@ import {
   CallbackSchemaItemCore,
   normalizeSchemaItem,
 } from "./schema.ts";
+import { ensureNoNumeric } from "./utils.ts";
 
 const poison = Symbol("POISON");
 type DecoderFactory<T = CallbackSchemaItemCore["type"]> = (
@@ -84,6 +85,32 @@ const decoders: {
       return Object.fromEntries(
         keys.map((k, i) => [k, children[k](payload[i])]),
       );
+    };
+  },
+  union: (spec) => {
+    const keys = Object.keys(spec.options);
+    ensureNoNumeric(keys);
+    const children = Object.fromEntries(
+      keys.map((k) => [k, getDecoder(spec.options[k])]),
+    );
+    return (payload) => {
+      if (payload === null) {
+        return null;
+      } else if (!Array.isArray(payload) || payload.length !== 2) {
+        return poison;
+      }
+      const [optionId, childPayload] = payload;
+      if (
+        !Number.isInteger(optionId) || optionId < 0 ||
+        optionId >= keys.length
+      ) {
+        return poison;
+      }
+
+      return {
+        type: keys[optionId],
+        data: children[keys[optionId]](childPayload),
+      };
     };
   },
   enum: (spec) => {

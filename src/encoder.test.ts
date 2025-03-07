@@ -103,6 +103,62 @@ Deno.test("Should encode arrays", () => {
   );
 });
 
+Deno.test("Should encode unions", () => {
+  const encoder = getSchemaEncoder({
+    root: {
+      type: "union",
+      nullable: true,
+      options: {
+        a: "string",
+        b: "number",
+        c: {
+          type: "object",
+          properties: {
+            d: "bigint",
+            e: "number",
+          },
+        },
+      },
+    },
+  });
+  assertEquals(
+    encoder({
+      root: {
+        type: "a",
+        data: "test",
+      },
+    }),
+    [[0, "test"]],
+  );
+  assertEquals(
+    encoder({
+      root: {
+        type: "b",
+        data: 123,
+      },
+    }),
+    [[1, 123]],
+  );
+  assertEquals(
+    encoder({
+      root: {
+        type: "c",
+        data: {
+          d: 123n,
+          e: 456,
+        },
+      },
+    }),
+    [[2, ["7b", 456]]],
+  );
+  assertEquals(
+    encoder({
+      root: null,
+    }),
+    [null],
+  );
+});
+
 Deno.test("Should encode enums", () => {
   const encoder = getSchemaEncoder({
     enum: {
