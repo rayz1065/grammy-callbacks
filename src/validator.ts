@@ -6,7 +6,6 @@ import {
   InferCallbackSchema,
   normalizeSchemaItem,
 } from "./schema.ts";
-import { ensureNoNumeric } from "./utils.ts";
 
 export interface SchemaValidationError {
   path: (string | number)[];
@@ -139,7 +138,7 @@ const validators: {
     };
   },
   object: (spec) => {
-    const keys = Object.keys(spec.properties).sort();
+    const keys = Object.keys(spec.properties);
     const children = Object.fromEntries(
       keys.map((k) => [k, getValidator(spec.properties[k])]),
     );
@@ -191,7 +190,6 @@ const validators: {
   },
   union: (spec) => {
     const keys = Object.keys(spec.options);
-    ensureNoNumeric(keys);
     const children = Object.fromEntries(
       keys.map((k) => [k, getValidator(spec.options[k])]),
     );

@@ -34,10 +34,10 @@ Deno.test("Should encode objects", () => {
       type: "object",
       nullable: true,
       properties: {
-        childA: {
+        childC: {
           type: "object",
           properties: {
-            value: "number",
+            value: "boolean",
           },
         },
         childB: {
@@ -46,10 +46,10 @@ Deno.test("Should encode objects", () => {
             value: "string",
           },
         },
-        childC: {
+        childA: {
           type: "object",
           properties: {
-            value: "boolean",
+            value: "number",
           },
         },
       },
@@ -60,10 +60,10 @@ Deno.test("Should encode objects", () => {
       root: {
         childA: { value: 1 },
         childB: { value: "test" },
-        childC: { value: true },
+        childC: { value: false },
       },
     }),
-    [[[1], ["test"], [1]]],
+    [[[0], ["test"], [1]]],
   );
   assertEquals(
     encoder({

@@ -64,7 +64,8 @@ const encoders: {
     };
   },
   object: (spec) => {
-    const keys = Object.keys(spec.properties).sort();
+    const keys = Object.keys(spec.properties);
+    ensureNoNumeric(keys);
     const children = Object.fromEntries(
       keys.map((k) => [k, getEncoder(spec.properties[k])]),
     );

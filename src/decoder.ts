@@ -72,7 +72,8 @@ const decoders: {
     };
   },
   object: (spec) => {
-    const keys = Object.keys(spec.properties).sort();
+    const keys = Object.keys(spec.properties);
+    ensureNoNumeric(keys);
     const children = Object.fromEntries(
       keys.map((k) => [k, getDecoder(spec.properties[k])]),
     );
