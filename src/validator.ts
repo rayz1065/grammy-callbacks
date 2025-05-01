@@ -102,6 +102,39 @@ const validators: {
   bigint: (spec) => checkPrimitive(spec),
   number: (spec) => checkPrimitive(spec),
   string: (spec) => checkPrimitive(spec),
+  any: () => (payload) => {
+    if (
+      payload === null ||
+      ["number", "string", "boolean"].includes(typeof payload)
+    ) {
+      return { success: true };
+    } else if (!Array.isArray(payload)) {
+      return {
+        success: false,
+        errors: [
+          {
+            path: [],
+            description: `Expected any, found ${typeof payload}`,
+            found: payload,
+          },
+        ],
+      };
+    }
+
+    const child = getValidator("any");
+    const errors = payload.map(child).flatMap((childRes) =>
+      childRes.success ? [] : childRes.errors
+    );
+
+    if (errors.length === 0) {
+      return { success: true };
+    } else {
+      return {
+        success: false,
+        errors,
+      };
+    }
+  },
   array: (spec) => {
     const child = getValidator(spec.items);
 

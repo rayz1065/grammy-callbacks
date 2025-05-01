@@ -1,4 +1,4 @@
-import { AssertTrue, IsExact } from "jsr:@std/testing/types";
+import { assertType, IsExact } from "jsr:@std/testing/types";
 import { CallbackSchema, InferCallbackSchema } from "./mod.ts";
 
 Deno.test("should infer the correct return type", () => {
@@ -44,9 +44,11 @@ Deno.test("should infer the correct return type", () => {
         },
       },
     },
+    any: "any",
   } satisfies CallbackSchema;
-
-  type Test = AssertTrue<
+  type EncodedPrimitive = number | string | boolean | null;
+  type EncodedValue = EncodedPrimitive | EncodedValue[];
+  assertType<
     IsExact<
       InferCallbackSchema<typeof schema>,
       {
@@ -71,7 +73,8 @@ Deno.test("should infer the correct return type", () => {
           | { type: "a"; data: string }
           | { type: "b"; data: number }
           | { type: "c"; data: { d: string; e: number } };
+        any: EncodedValue;
       }
     >
-  >;
+  >(true);
 });

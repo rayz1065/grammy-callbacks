@@ -171,3 +171,12 @@ Deno.test("Should encode enums", () => {
   assertEquals(encoder({ enum: "world" }), [2]);
   assertEquals(encoder({ enum: null }), [0]);
 });
+
+Deno.test("Should encode any", () => {
+  const encoder = getSchemaEncoder({
+    any: "any",
+  });
+  assertEquals(encoder({ any: 123 }), [123]);
+  assertEquals(encoder({ any: "123" }), ["123"]);
+  assertEquals(encoder({ any: [123, "abc", [456]] }), [[123, "abc", [456]]]);
+});

@@ -51,6 +51,7 @@ const encoders: {
   string: () => (payload) => (payload === null ? null : (payload as string)),
   bigint: () => (payload) =>
     payload === null ? null : (payload as bigint).toString(16),
+  any: () => (payload) => (payload as EncodedValue),
   array: (spec) => {
     const arrayIfyChild = getEncoder(spec.items);
 

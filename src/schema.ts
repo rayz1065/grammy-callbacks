@@ -9,6 +9,11 @@ export type CallbackSchemaPrimitive<T extends string = keyof PrimitiveMap> = {
   type: T;
   nullable?: boolean;
 };
+type EncodedPrimitive = number | string | boolean | null;
+type EncodedValue = EncodedPrimitive | EncodedValue[];
+export type CallbackSchemaAny = {
+  type: "any";
+};
 export type CallbackSchemaArray = {
   type: "array";
   nullable?: boolean;
@@ -36,6 +41,7 @@ export type CallbackSchemaUnion = {
 export type CallbackSchemaItemCore =
   | CallbackSchemaPrimitive
   | CallbackSchemaObject
+  | CallbackSchemaAny
   | CallbackSchemaArray
   | CallbackSchemaUnion
   | CallbackSchemaEnum<EnumValue>;
@@ -43,7 +49,10 @@ export type CallbackSchemaItemCore =
  * Callback schema item, can be an object describing the type or a string
  * corresponding to one of the primitive types.
  */
-export type CallbackSchemaItem = CallbackSchemaItemCore | keyof PrimitiveMap;
+export type CallbackSchemaItem =
+  | CallbackSchemaItemCore
+  | keyof PrimitiveMap
+  | "any";
 /**
  * Schema for a encoding and decoding a callback query
  */
@@ -78,6 +87,7 @@ type InferItemCore<T extends CallbackSchemaItemCore> = InferMaybeNullable<
         };
       }[keyof T["options"]]
       : never;
+    any: EncodedValue;
   })[T["type"]]
 >;
 /**

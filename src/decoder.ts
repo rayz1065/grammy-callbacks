@@ -59,6 +59,7 @@ const decoders: {
   },
   number: () => (payload) => payload,
   string: () => (payload) => payload,
+  any: () => (payload) => payload,
   array: (spec) => {
     const child = getDecoder(spec.items);
 
